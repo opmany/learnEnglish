@@ -1,7 +1,7 @@
 {
   "name": "my-app",
   "version": "0.1.0",
-  "homepage": "https://opmany.github.io/react-gh-pages",
+  "homepage": "https://opmany.github.io/learnEnglish",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
