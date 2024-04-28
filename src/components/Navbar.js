@@ -9,7 +9,7 @@ const MyNavbar = () => {
   return (
     <Navbar expand="lg" className="bg-primary">
       <Container>
-        <Navbar.Brand href="/learnEnglish/">
+        <Navbar.Brand href="/">
           <Image
             alt=""
             src={folderImg}
@@ -22,8 +22,8 @@ const MyNavbar = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto" variant="underline">
-            <Nav.Link href="/learnEnglish/">Home</Nav.Link>
-            <Nav.Link href="/learnEnglish/WordsShowcase">
+            <Nav.Link href="/">Home</Nav.Link>
+            <Nav.Link href="/WordsShowcase">
               Words Showcase
             </Nav.Link>
           </Nav>

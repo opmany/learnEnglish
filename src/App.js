@@ -11,10 +11,10 @@ function App() {
     <Router>
       <Navbar />
       <Routes>
-        <Route exact path="/learnEnglish/" element={<Home />} />
-        <Route path="/learnEnglish/WordsShowcase" element={<WordsShowcase />} />
-        <Route path="/learnEnglish/OrderPractice" element={<OrderPractice />} />
-        <Route path="/learnEnglish/RandomOrderPractice" element={<RandomOrderPractice />} />
+        <Route exact path="/" element={<Home />} />
+        <Route path="/WordsShowcase" element={<WordsShowcase />} />
+        <Route path="/OrderPractice" element={<OrderPractice />} />
+        <Route path="/RandomOrderPractice" element={<RandomOrderPractice />} />
       </Routes>
     </Router>
   );
