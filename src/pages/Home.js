@@ -11,12 +11,12 @@ const Home = () => {
       <h1>Please Click On The Mode Of Practicing</h1>
       <Row className="mt-5">
         <Col>
-          <Button href="/OrderPractice" variant="primary">
+          <Button href="/learnEnglish/OrderPractice" variant="primary">
             Order Practice
           </Button>
         </Col>
         <Col>
-          <Button href="/RandomOrderPractice" variant="primary">
+          <Button href="/learnEnglish/RandomOrderPractice" variant="primary">
             Random Order Practice
           </Button>
         </Col>

@@ -5,21 +5,14 @@ import Button from "react-bootstrap/Button";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
-const shuffleArray = (array) => {
-  let currentIndex = array.length;
-  let temporaryValue, randomIndex;
-  while (0 !== currentIndex) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
-  return array;
+const shuffle = (array) => {
+  return array
+    .map((a) => ({ sort: Math.random(), value: a }))
+    .sort((a, b) => a.sort - b.sort)
+    .map((a) => a.value);
 };
 
-const newShuffledArray = shuffleArray(WordBank);
+const newShuffledArray = shuffle(WordBank);
 
 const RandomOrderPractice = () => {
   const [index, setIndex] = useState(0);
@@ -46,6 +39,18 @@ const RandomOrderPractice = () => {
               </Col>
             )}
           </Row>
+          {index !== 0 && (
+            <Button
+              className="mt-5 bg-danger"
+              onClick={() => {
+                setIndex(index - 1);
+                setRevealAnswer(false);
+              }}
+              variant="primary"
+            >
+              previous Word
+            </Button>
+          )}{" "}
           <Button
             className="mt-5"
             onClick={() => {

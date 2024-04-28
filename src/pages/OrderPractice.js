@@ -30,8 +30,20 @@ const OrderPractice = () => {
               </Col>
             )}
           </Row>
+          {index !== 0 && (
+            <Button
+              className="mt-5 bg-danger"
+              onClick={() => {
+                setIndex(index - 1);
+                setRevealAnswer(false);
+              }}
+              variant="primary"
+            >
+              previous Word
+            </Button>
+          )}{" "}
           <Button
-            className="mt-5"
+            className="mt-5 bg-success"
             onClick={() => {
               setIndex(index + 1);
               setRevealAnswer(false);
