@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import WordsShowcase from "./pages/WordsShowcase";
 import OrderPractice from "./pages/OrderPractice";
 import RandomOrderPractice from "./pages/RandomOrderPractice";
+import DBHandler from "./pages/DBHandler";
+
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         <Route path="/WordsShowcase" element={<WordsShowcase />} />
         <Route path="/OrderPractice" element={<OrderPractice />} />
         <Route path="/RandomOrderPractice" element={<RandomOrderPractice />} />
+        <Route path="/DBHandler" element={<DBHandler />} />
+
       </Routes>
     </Router>
   );

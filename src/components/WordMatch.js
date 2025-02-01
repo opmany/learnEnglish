@@ -6,10 +6,12 @@ import Container from "react-bootstrap/esm/Container";
 const WordMatch = (props) => {
   return (
     <Container className="text-center">
-      <Row className="mt-1 justify-content-md-center">
-        <Col lg="2">{props.word}</Col>
-        <Col lg="auto">----</Col>
-        <Col lg="2">{props.match}</Col>
+      <Row className="mt-1 justify-content-md-center border-bottom">
+        <Col xs lg="2">{props.word}</Col>
+        <Col xs lg="auto">----</Col>
+        <Col xs lg="2">{props.meaning}</Col>
+        <Col xs lg="auto">----</Col>
+        <Col xs lg="2">{props.translation}</Col>
       </Row>
     </Container>
   );

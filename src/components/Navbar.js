@@ -26,6 +26,9 @@ const MyNavbar = () => {
             <Nav.Link href="/WordsShowcase">
               Words Showcase
             </Nav.Link>
+            <Nav.Link href="/DBHandler">
+              DB Handler
+            </Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>
