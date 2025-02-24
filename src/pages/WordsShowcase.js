@@ -1,6 +1,6 @@
 import React from "react";
 import WordMatch from "../components/WordMatch";
-import { WordDB, getCurrWordBank } from "../WordDB";
+import { getCurrWordBank } from "../WordDB";
 import Container from "react-bootstrap/Container";
 
 const WordsShowcase = (props) => {

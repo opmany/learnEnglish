@@ -1,5 +1,5 @@
 import React from "react";
-import { WordDB, getCurrWordBank } from "../WordDB";
+import { getCurrWordBank } from "../WordDB";
 import Training from "../components/Training";
 
 const shuffle = (array) => {
