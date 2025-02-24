@@ -1,5 +1,5 @@
 import React from "react";
-import { WordDB } from "../WordDB";
+import { WordDB, getCurrWordBank } from "../WordDB";
 import Training from "../components/Training";
 
 const shuffle = (array) => {
@@ -9,9 +9,10 @@ const shuffle = (array) => {
     .map((a) => a.value);
 };
 
-const newShuffledArray = shuffle(WordDB);
 
-const RandomOrderPractice = () => {
+const RandomOrderPractice = (props) => {
+
+  const newShuffledArray = shuffle(getCurrWordBank(props.currentDBIndex).words);
 
   return (
     <Training 

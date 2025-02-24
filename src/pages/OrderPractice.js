@@ -1,14 +1,14 @@
 import React from "react";
-import { WordDB } from "../WordDB";
+import { WordDB, getCurrWordBank } from "../WordDB";
 import Training from "../components/Training";
 
 
-const OrderPractice = () => {
+const OrderPractice = (props) => {
 
 
   return (
     <Training 
-    WordDB={WordDB}
+    WordDB={getCurrWordBank(props.currentDBIndex).words}
     />
     
   );
