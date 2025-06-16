@@ -7,7 +7,6 @@ import OrderPractice from "./pages/OrderPractice";
 import RandomOrderPractice from "./pages/RandomOrderPractice";
 import DBHandler from "./pages/DBHandler";
 
-
 function App() {
     const [dbIndex, setDbIndex] = useState(0);
   
