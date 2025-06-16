@@ -67,3 +67,8 @@ export async function uploadExcel(file) {
 
   return res.json();
 }
+
+export async function getConnection() {
+  const res = await fetch(`${API_URL}/connection`);
+  return res.json();
+}

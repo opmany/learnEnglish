@@ -164,6 +164,10 @@ app.delete("/api/words/:id", async (req, res) => {
   }
 });
 
+app.get("/api/connection", async (req, res) => {
+  res.json({ status: "OK", message: "Backend is reachable!" });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
