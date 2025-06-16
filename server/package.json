@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "npm install express cors pg dotenv",
+    "build": "npm install express cors pg dotenv xlsx multer",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +15,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "pg": "^8.16.0"
+    "multer": "^2.0.1",
+    "pg": "^8.16.0",
+    "xlsx": "^0.18.5"
   }
 }
