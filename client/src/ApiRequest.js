@@ -1,4 +1,4 @@
-const API_URL = process.env.BACKEND_URL;
+const API_URL = process.env.REACT_APP_BACKEND_URL + "/api";
 
 export async function getExams() {
   const res = await fetch(`${API_URL}/exams`);
