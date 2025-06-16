@@ -11,9 +11,9 @@ const DBHandler = (props) => {
 
   async function testConnection() {
     try {
-      const data = await getConnection();
+      const result = await getConnection();
 
-      setConnectionStatus(data.message);
+      setConnectionStatus(result.message);
     } catch (err) {
       setConnectionStatus("Backend unreachable 😢");
     }

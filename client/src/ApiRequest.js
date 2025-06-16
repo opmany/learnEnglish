@@ -69,6 +69,12 @@ export async function uploadExcel(file) {
 }
 
 export async function getConnection() {
-  const res = await fetch(`${API_URL}/connection`);
-  return res.json();
+    try {
+    const res = await fetch(`${API_URL}/connection`);
+    if (!res.ok) throw new Error("Failed to connect");
+    const data = await res.json();
+    return { success: true, message: data.message };
+  } catch (err) {
+    return { success: false, message: "Backend unreachable 😢" };
+  }
 }
