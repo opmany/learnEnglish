@@ -4,6 +4,7 @@ import { Button, Container, Row, Col, Card, Alert } from "react-bootstrap";
 import { shuffleArray } from "../Utils";
 
 const chunkSize = 5;
+const matchColors = ["#FFA07A", "#90EE90", "#ADD8E6", "#DDA0DD", "#F0E68C"];
 
 const MatchingGame = () => {
   const { currentExamJson } = useExam();
@@ -11,9 +12,9 @@ const MatchingGame = () => {
   const [roundIndex, setRoundIndex] = useState(0);
   const [currentChunk, setCurrentChunk] = useState([]);
   const [words, setWords] = useState([]);
-  const [translations, setTranslations] = useState([]);
+  const [meanings, setMeanings] = useState([]);
   const [selectedWord, setSelectedWord] = useState(null);
-  const [matchedIds, setMatchedIds] = useState([]);
+  const [matchedPairs, setMatchedPairs] = useState([]);
   const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
@@ -24,8 +25,8 @@ const MatchingGame = () => {
 
       setCurrentChunk(chunk);
       setWords(shuffleArray(chunk));
-      setTranslations(shuffleArray(chunk));
-      setMatchedIds([]);
+      setMeanings(shuffleArray(chunk));
+      setMatchedPairs([]);
       setSelectedWord(null);
       setFeedback(null);
     }
@@ -35,17 +36,23 @@ const MatchingGame = () => {
     setRoundIndex(0); // Reset round when switching exams
   }, [currentExamJson?.id]);
 
+  const getPairColor = (id) => {
+    const pair = matchedPairs.find((p) => p.id === id);
+    return pair?.color || null;
+  };
+
   const handleWordClick = (word) => {
-    if (matchedIds.includes(word.id)) return;
+    if (matchedPairs.find((p) => p.id === word.id)) return;
     setSelectedWord(word);
     setFeedback(null);
   };
 
-  const handleTranslationClick = (translation) => {
-    if (!selectedWord || matchedIds.includes(translation.id)) return;
+  const handleMeaningClick = (meaningItem) => {
+    if (!selectedWord || matchedPairs.find((p) => p.id === meaningItem.id)) return;
 
-    if (selectedWord.id === translation.id) {
-      setMatchedIds([...matchedIds, selectedWord.id]);
+    if (selectedWord.id === meaningItem.id) {
+      const newColor = matchColors[matchedPairs.length % matchColors.length];
+      setMatchedPairs([...matchedPairs, { id: selectedWord.id, color: newColor }]);
       setFeedback({ type: "success", message: "Correct Match! 🎉" });
       setSelectedWord(null);
     } else {
@@ -73,48 +80,58 @@ const MatchingGame = () => {
       <Row className="mt-4">
         <Col>
           <h5>Words</h5>
-          {words.map((w) => (
-            <Card
-              key={w.id}
-              onClick={() => handleWordClick(w)}
-              bg={
-                matchedIds.includes(w.id)
-                  ? "success"
-                  : selectedWord?.id === w.id
-                  ? "primary"
-                  : "light"
-              }
-              text={
-                matchedIds.includes(w.id) || selectedWord?.id === w.id
-                  ? "white"
-                  : "dark"
-              }
-              className="mb-2 cursor-pointer"
-              style={{ cursor: "pointer" }}
-            >
-              <Card.Body>{w.word}</Card.Body>
-            </Card>
-          ))}
+          {words.map((w) => {
+            const color = getPairColor(w.id);
+            const isSelected = selectedWord?.id === w.id;
+
+            return (
+              <Card
+                key={w.id}
+                onClick={() => handleWordClick(w)}
+                style={{
+                  cursor: "pointer",
+                  backgroundColor: color || (isSelected ? "#0d6efd" : "#f8f9fa"),
+                  color: isSelected ? "white" : "black",
+                }}
+                className="mb-2"
+              >
+                <Card.Body>
+                  <strong>{w.word}</strong>
+                </Card.Body>
+              </Card>
+            );
+          })}
         </Col>
 
         <Col>
-          <h5>Translations</h5>
-          {translations.map((t) => (
-            <Card
-              key={t.id}
-              onClick={() => handleTranslationClick(t)}
-              bg={matchedIds.includes(t.id) ? "success" : "light"}
-              text={matchedIds.includes(t.id) ? "white" : "dark"}
-              className="mb-2 cursor-pointer"
-              style={{ cursor: "pointer" }}
-            >
-              <Card.Body>{t.translation}</Card.Body>
-            </Card>
-          ))}
+          <h5>Meanings</h5>
+          {meanings.map((m) => {
+            const color = getPairColor(m.id);
+
+            return (
+              <Card
+                key={m.id}
+                onClick={() => handleMeaningClick(m)}
+                style={{
+                  cursor: "pointer",
+                  backgroundColor: color || "#f8f9fa",
+                  color: "black",
+                }}
+                className="mb-2"
+              >
+                <Card.Body>
+                  <div>
+                    <strong>{m.meaning}</strong>
+                    {color && <span className="ms-2">({m.translation})</span>}
+                  </div>
+                </Card.Body>
+              </Card>
+            );
+          })}
         </Col>
       </Row>
 
-      {matchedIds.length === currentChunk.length && (
+      {matchedPairs.length === currentChunk.length && (
         <div className="mt-4">
           {isGameOver() ? (
             <h4>🏁 You've completed all words in this exam!</h4>
@@ -124,7 +141,7 @@ const MatchingGame = () => {
         </div>
       )}
 
-    {feedback && (
+      {feedback && (
         <Alert variant={feedback.type} className="mt-3">
           {feedback.message}
         </Alert>
