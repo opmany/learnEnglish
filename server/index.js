@@ -1,8 +1,9 @@
-// FILE: backend/index.js
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const xlsx = require("xlsx");
+const fs = require("fs");
+const path = require("path");
 const { Pool } = require("pg");
 require("dotenv").config();
 
@@ -142,6 +143,109 @@ app.put("/api/exams/:id/words", async (req, res) => {
     client.release();
   }
 });
+
+app.post("/api/parse", upload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+
+  try {
+    const workbook = xlsx.readFile(req.file.path);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    // get raw rows with default values for empty cells
+    const rawRows = xlsx.utils.sheet_to_json(sheet, { defval: "" });
+
+    // normalize each row's keys (case-insensitive) and fall back to positional mapping
+    const rows = rawRows.map((raw) => {
+      const mapped = { word: "", meaning: "", translation: "" };
+
+      for (const key of Object.keys(raw)) {
+        const k = key.toString().trim().toLowerCase();
+        const val = raw[key];
+        if (k === "word") mapped.word = val;
+        else if (k === "meaning") mapped.meaning = val;
+        else if (k === "translation") mapped.translation = val;
+      }
+
+      // if needed, fallback to positional columns (in case headers are missing)
+      const vals = Object.values(raw);
+      if (!mapped.word && vals[0] !== undefined) mapped.word = vals[0];
+      if (!mapped.meaning && vals[1] !== undefined) mapped.meaning = vals[1];
+      if (!mapped.translation && vals[2] !== undefined) mapped.translation = vals[2];
+
+      return {
+        word: String(mapped.word || "").trim(),
+        meaning: String(mapped.meaning || "").trim(),
+        translation: String(mapped.translation || "").trim(),
+      };
+    });
+
+    // filter out completely empty rows (must have at least a word)
+    const filtered = rows.filter((r) => r.word && r.word.length > 0);
+
+    // return original filename so frontend can use it as exam name
+    res.json({ fileName: req.file.originalname, rows: filtered });
+
+  } catch (err) {
+    console.error("Parse error:", err);
+    res.status(500).send("Error parsing file");
+  } finally {
+    // cleanup temp file
+    try { 
+      fs.unlinkSync(req.file.path); 
+    } catch (e) {}
+  }
+});
+
+app.post("/api/insert", async (req, res) => {
+  const { rows, fileName } = req.body;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ message: "No rows provided" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // sanitize exam name (strip extension and take basename)
+    const rawName = fileName ? path.basename(fileName) : `Imported Exam ${Date.now()}`;
+    const examName = rawName.replace(/\.[^/.]+$/, "").trim().slice(0, 255); // limit length
+
+    // create exam
+    const examResult = await client.query(
+      "INSERT INTO exams (name) VALUES ($1) RETURNING *",
+      [examName]
+    );
+    const exam = examResult.rows[0];
+
+    // insert words (trim values). I use a single INSERT per row to keep it simple;
+    // for large files use batched insert or COPY.
+    for (let i = 0; i < rows.length; ++i) {
+      const r = rows[i];
+      const word = (r.word || "").toString().trim();
+      const meaning = (r.meaning || "").toString().trim();
+      const translation = (r.translation || "").toString().trim();
+      if (!word) continue; // skip rows without a word
+
+      await client.query(
+        `INSERT INTO words (exam_id, word, meaning, translation)
+         VALUES ($1, $2, $3, $4)`,
+        [exam.id, word, meaning, translation]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    const wordsRes = await pool.query("SELECT * FROM words WHERE exam_id = $1 ORDER BY id", [exam.id]);
+    res.status(201).json({ ...exam, words: wordsRes.rows });
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Error inserting exam:", err);
+    res.status(500).json({ message: "Error inserting exam" });
+  } finally {
+    client.release();
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

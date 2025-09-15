@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -7,20 +7,11 @@ import Navbar from "react-bootstrap/Navbar";
 import folderImg from "../images/folder.png";
 import { useNavigate } from "react-router";
 import { useExam } from "../ExamContext";
-import { getExamList } from "../ApiRequest";
 
 const MyNavbar = () => {
-  const { setSelectedExamId, connectionStatus, currentExamJson } = useExam();
+  const { setSelectedExamId, connectionStatus, currentExamJson, exams } = useExam();
   
   let navigate = useNavigate();
-
-  const [exams, setExams] = useState([]);
-
-  useEffect(() => {
-    getExamList().then(exams => {
-      setExams(exams);
-    });
-  }, []);
 
   return (
     <Navbar expand="lg" className="bg-primary">
