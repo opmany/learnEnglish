@@ -12,7 +12,7 @@
   text-align: center;
   transition: transform 0.6s;
   transform-style: preserve-3d;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border-radius: 0.25rem;
 }
 
@@ -30,18 +30,49 @@
   justify-content: center;
   padding: 1rem;
   border-radius: 0.25rem;
+  color: var(--text-primary);
+}
+
+/* Light mode styles */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #000000;
+  --text-secondary: #6c757d;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode styles */
+[data-theme='dark'] {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 .card-front {
-  background-color: white;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .card-back {
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   transform: rotateY(180deg);
 }
 
 .card-title {
   font-size: 1.8rem;
   margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.text-muted {
+  color: var(--text-secondary);
+}
+
+/* Add transition for smooth theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
