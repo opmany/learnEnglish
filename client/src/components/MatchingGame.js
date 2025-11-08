@@ -5,7 +5,10 @@ import { shuffleArray } from "../Utils";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const realWordsAmount = 3;
+// Game configuration - number of words and meanings per round
+const REAL_WORDS = 3;
+const DISTRACTOR_WORDS = 3;
+const DISTRACTOR_MEANINGS = 0;
 
 const matchColors = ["#FFA07A", "#90EE90", "#ADD8E6", "#DDA0DD", "#F0E68C"];
 
@@ -23,20 +26,21 @@ const MatchingGame = ({ roundAmount, startAll, onRestart }) => {
   const [incorrectCount, setIncorrectCount] = useState(0);
 
   const totalRounds = startAll
-    ? (currentExamJson?.words ? Math.ceil(currentExamJson.words.length / realWordsAmount) : 0)
+    ? (currentExamJson?.words ? Math.ceil(currentExamJson.words.length / REAL_WORDS) : 0)
     : roundAmount || 1;
 
   useEffect(() => {
     if (currentExamJson?.words) {
       const allWords = shuffleArray(currentExamJson.words);
-      const start = roundIndex * realWordsAmount;
-      const chunk = allWords.slice(start, start + realWordsAmount);
-      const correctMeanings = [...chunk];
+      const start = roundIndex * REAL_WORDS;
+      const chunk = allWords.slice(start, start + REAL_WORDS);
+      const correctMeanings = chunk;
       const otherWords = allWords.filter(w => !chunk.includes(w));
-      const randomDistractors = shuffleArray(otherWords).slice(0, 3);
+      const distractorWords = shuffleArray(otherWords).slice(0, DISTRACTOR_WORDS);
+      const distractorMeanings = shuffleArray(otherWords).slice(0, DISTRACTOR_MEANINGS);
       setCurrentChunk(chunk);
-      setWords(shuffleArray(chunk));
-      setMeanings(shuffleArray([...correctMeanings, ...randomDistractors]));
+      setWords(shuffleArray([...chunk, ...distractorWords]));
+      setMeanings(shuffleArray([...correctMeanings, ...distractorMeanings]));
       setMatchedPairs([]);
       setSelectedWordIdx(null);
     }
@@ -82,7 +86,7 @@ const MatchingGame = ({ roundAmount, startAll, onRestart }) => {
 
   // Game ends when last round is completed
   const isGameOver = React.useCallback(() => {
-    return roundIndex + 1 >= totalRounds;
+    return roundIndex >= totalRounds - 1;
   }, [roundIndex, totalRounds]);
 
   const [showResultModal, setShowResultModal] = useState(false);
@@ -175,7 +179,7 @@ const MatchingGame = ({ roundAmount, startAll, onRestart }) => {
               )}
             </>
           ) : (
-            <Button onClick={nextRound} disabled={roundIndex + 1 >= totalRounds}>▶️ Next Round</Button>
+            <Button onClick={nextRound} disabled={matchedPairs.length < REAL_WORDS}>▶️ Next Round</Button>
           )}
         </div>
       )}
@@ -195,7 +199,9 @@ const MatchingGame = ({ roundAmount, startAll, onRestart }) => {
                 <ul style={{ textAlign: "left", margin: 0, padding: 0, listStyle: "none" }}>
                   {mistakes.map((m, i) => (
                     <li key={i} style={{ marginBottom: 8 }}>
-                      <strong>{m.word.word}</strong> → <span style={{ color: "red" }}>{m.meaning.meaning}</span>
+                      <strong>{m.word.word}</strong> → 
+                      <span style={{ color: "red" }}>{m.meaning.meaning}</span> → 
+                      <span style={{ color: "green" }}>{m.word.meaning}</span>
                     </li>
                   ))}
                 </ul>
