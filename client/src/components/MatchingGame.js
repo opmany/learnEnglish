@@ -136,6 +136,7 @@ const MatchingGame = ({ roundAmount, startAll, onRestart }) => {
                   >
                     {w.word}
                   </Button>
+                  {((isMatched && w.translation) || (matchedPairs.length === currentChunk.length)) && (<span className="ms-2">({w.translation})</span>)}
                 </div>
               );
             })}

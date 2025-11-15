@@ -3,7 +3,7 @@ import { getConnection, getExam, getExamList } from "./ApiRequest";
 
 const ExamContext = createContext();
 
-const startExamId = 8;
+const startExamId = 9;
 
 export function ExamProvider({ children }) {
   const [selectedExamId, setSelectedExamId] = useState(null);
