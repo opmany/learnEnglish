@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useExam } from "../ExamContext";
+import { useExam } from "../contexts/ExamContext";
 import { Button, Container, Row, Col, Modal } from "react-bootstrap";
 import { shuffleArray } from "../Utils";
 import { ToastContainer, toast } from "react-toastify";

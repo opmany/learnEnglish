@@ -5,6 +5,8 @@ const xlsx = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 require("dotenv").config();
 
 const app = express();
@@ -22,6 +24,350 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
 });
+
+const JWT_SECRET = process.env.JWT_SECRET || "sdgjkhsdgkkjhndgkkjbcvjh";
+
+
+app.post('/signup', async (req, res) => {
+  const { username, password, email } = req.body;
+  const hash = await bcrypt.hash(password, 10);
+  const user = await pool.query(
+    'INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id, username',
+    [username, hash, email]
+  );
+  res.json(user.rows[0]);
+});
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+
+  if (!user.rows.length) return res.status(401).json({ error: 'Invalid username' });
+
+  const valid = await bcrypt.compare(password, user.rows[0].password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid password' });
+
+  const token = jwt.sign({ id: user.rows[0].id }, JWT_SECRET, { expiresIn: '3h' });
+  res.json({ token });
+});
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user; // user.id is available
+    next();
+  });
+}
+
+async function checkTeacher(req, classId) {
+  const result = await pool.query(
+    'SELECT role FROM class_memberships WHERE user_id=$1 AND class_id=$2',
+    [req.user.id, classId]
+  );
+  if (!result.rows.length || result.rows[0].role !== 'teacher') {
+    throw new Error('Forbidden');
+  }
+}
+
+async function checkAdmin(req, res, next) {
+  const result = await pool.query('SELECT role FROM users WHERE id=$1', [req.user.id]);
+  if (!result.rows.length || result.rows[0].role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+  next();
+}
+
+
+// Get all exams for a class
+app.get('/classes/:id/exams', authenticateToken, async (req, res) => {
+  const classId = req.params.id;
+  const exams = await pool.query('SELECT * FROM exams WHERE class_id=$1', [classId]);
+  res.json(exams.rows);
+});
+
+// Get all words for an exam
+app.get('/exams/:id/words', authenticateToken, async (req, res) => {
+  const examId = req.params.id;
+  const words = await pool.query('SELECT * FROM words WHERE exam_id=$1', [examId]);
+  res.json(words.rows);
+});
+
+
+// Get all exams for a class
+app.post("/class", authenticateToken, async (req, res) => {
+  const { name } = req.body;
+  const teacher_id = req.user.id;
+
+  if (!name) return res.status(400).json({ message: "Class name is required" });
+
+  const client = await pool.connect(); // get a client for transaction
+
+  try {
+    await client.query("BEGIN");
+
+    // 1. Create the class
+    const classResult = await client.query(
+      "INSERT INTO classes (name, teacher_id) VALUES ($1, $2) RETURNING *",
+      [name, teacher_id]
+    );
+    const newClass = classResult.rows[0];
+    if (!newClass) throw new Error("Failed to create class");
+
+    // 2. Add teacher to class_memberships
+    await client.query(
+      "INSERT INTO class_memberships (user_id, class_id, role) VALUES ($1, $2, 'teacher')",
+      [teacher_id, newClass.id]
+    );
+
+    // 3. Add admin (if exists)
+    const adminResult = await client.query(
+      "SELECT id FROM users WHERE is_admin = TRUE LIMIT 1"
+    );
+    const admin_id = adminResult.rows[0]?.id;
+
+    if (admin_id && admin_id !== teacher_id) {
+      await client.query(
+        "INSERT INTO class_memberships (user_id, class_id, role) VALUES ($1, $2, 'admin')",
+        [admin_id, newClass.id]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.status(201).json(newClass);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Create class failed:", err);
+    res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
+  }
+});
+
+app.post("/exam", authenticateToken, async (req, res) => {
+  const { name, class_id } = req.body;
+  const user_id = req.user.id;
+
+  if (!name || !class_id) {
+    return res.status(400).json({ message: "Exam name and class_id are required" });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Check permissions
+    const permResult = await client.query(
+      `SELECT role FROM class_memberships WHERE user_id=$1 AND class_id=$2`,
+      [user_id, class_id]
+    );
+
+    const classResult = await client.query(
+      `SELECT teacher_id, default_exam_id FROM classes WHERE id=$1`,
+      [class_id]
+    );
+
+    if (!classResult.rows[0]) throw new Error("Class not found");
+
+    const isTeacher = classResult.rows[0].teacher_id === user_id;
+    const role = permResult.rows[0]?.role;
+
+    if (!role && !isTeacher) {
+      return res.status(403).json({ message: "Not allowed to add exams" });
+    }
+
+    // Determine if default exam
+    const isDefault = !classResult.rows[0].default_exam_id;
+
+    // Insert exam
+    const examResult = await client.query(
+      `INSERT INTO exams (name, class_id, is_default) VALUES ($1, $2, $3) RETURNING *`,
+      [name, class_id, isDefault]
+    );
+
+    // Update class default_exam_id if needed
+    if (isDefault) {
+      await client.query(
+        `UPDATE classes SET default_exam_id=$1 WHERE id=$2`,
+        [examResult.rows[0].id, class_id]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.status(201).json(examResult.rows[0]);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
+  }
+});
+
+app.get("/my-classes", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.name, u.username AS teacher_username
+       FROM classes c
+       LEFT JOIN users u ON c.teacher_id = u.id
+       JOIN class_memberships cm ON cm.class_id = c.id
+       WHERE cm.user_id = $1`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// Get all exams for all classes the user belongs to
+app.get("/my-exams", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      `SELECT e.*, c.name AS class_name
+       FROM exams e
+       JOIN classes c ON e.class_id = c.id
+       JOIN class_memberships cm ON cm.class_id = c.id
+       WHERE cm.user_id = $1`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+app.put("/classes/:classId/default-exam/:examId", async (req, res) => {
+    const { classId, examId } = req.params;
+
+    try {
+        await pool.query("BEGIN");
+
+        // remove previous defaults
+        await pool.query(
+            "UPDATE exams SET is_default = false WHERE class_id = $1",
+            [classId]
+        );
+
+        // set selected exam to default
+        await pool.query(
+            "UPDATE exams SET is_default = true WHERE id = $1 AND class_id = $2",
+            [examId, classId]
+        );
+
+        // update class default reference
+        await pool.query(
+            "UPDATE classes SET default_exam_id = $1 WHERE id = $2",
+            [examId, classId]
+        );
+
+        await pool.query("COMMIT");
+        res.json({ message: "Default exam updated successfully" });
+    } catch (error) {
+        await pool.query("ROLLBACK");
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/class/:id", authenticateToken, async (req, res) => {
+  const classId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT c.*, u.username AS teacher_username
+       FROM classes c
+       LEFT JOIN users u ON c.teacher_id = u.id
+       WHERE c.id = $1`,
+      [classId]
+    );
+
+    if (!result.rows[0]) return res.status(404).json({ message: "Class not found" });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/class/:id/exams", authenticateToken, async (req, res) => {
+  const classId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT * FROM exams
+       WHERE class_id = $1
+       ORDER BY id`,
+      [classId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("GET /class/:id/exams error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+async function checkClassPermission(userId, classId) {
+  const q = await pool.query(
+    `SELECT role 
+     FROM class_memberships 
+     WHERE user_id = $1 AND class_id = $2`,
+    [userId, classId]
+  );
+
+  if (q.rows.length === 0) return false;
+  const role = q.rows[0].role;
+  return role === "teacher" || role === "admin";
+}
+
+app.put("/class/:id/default-exam", authenticateToken, async (req, res) => {
+  const classId = req.params.id;
+  const { exam_id } = req.body;
+  const userId = req.user.id;
+
+  if (!exam_id) return res.status(400).json({ message: "Missing exam_id" });
+
+  try {
+    const allowed = await checkClassPermission(userId, classId);
+    if (!allowed) return res.status(403).json({ message: "Not allowed" });
+
+    // Set default
+    await pool.query(
+      `UPDATE classes SET default_exam_id = $1 WHERE id = $2`,
+      [exam_id, classId]
+    );
+
+    // Update exam table flags (optional)
+    await pool.query(
+      `UPDATE exams 
+       SET is_default = (id = $1) 
+       WHERE class_id = $2`,
+      [exam_id, classId]
+    );
+
+    res.json({ message: "Default exam updated" });
+  } catch (err) {
+    console.error("PUT /class/:id/default-exam error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//------------------------------------------------------------------------------------------------------------------------
 
 // Get all exams with words
 app.get("/api/exams", async (req, res) => {

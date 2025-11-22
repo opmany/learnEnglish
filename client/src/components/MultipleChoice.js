@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
-import { useExam } from "../ExamContext";
+import { useExam } from "../contexts/ExamContext";
 import { shuffleArray } from "../Utils";
 
 const amountOfChoices = 4;

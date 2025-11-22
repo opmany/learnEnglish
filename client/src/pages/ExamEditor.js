@@ -5,7 +5,7 @@ import Row from "react-bootstrap/esm/Row";
 import Col from "react-bootstrap/esm/Col";
 import { Modal, Button, Form } from "react-bootstrap";
 import { updateExamWords, parseExcel, insertExam } from "../ApiRequest";
-import { useExam } from "../ExamContext";
+import { useExam } from "../contexts/ExamContext";
 import { Toast, ToastContainer } from "react-bootstrap";
 
 const ExamEditor = (props) => {

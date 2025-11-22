@@ -1,6 +1,6 @@
 import React from "react";
 import Container from "react-bootstrap/Container";
-import { useExam } from "../ExamContext";
+import { useExam } from "../contexts/ExamContext";
 import Table from 'react-bootstrap/Table';
 
 const WordsShowcase = (props) => {
