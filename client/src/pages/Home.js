@@ -15,6 +15,12 @@ export default function Home() {
 
   let navigate = useNavigate();
 
+  const checkUserConnection = () => {
+    if (!user) {
+    navigate("/login");
+    }
+  };
+
 useEffect(() => {
   const fetchClasses = async () => {
     try {
@@ -26,17 +32,12 @@ useEffect(() => {
       setError("Could not load your classes.");
     } finally {
       setLoading(false);
+      checkUserConnection();
     }
   };
 
   fetchClasses();
 }, []);
-
-useEffect(() => {
-  if (!user) {
-  navigate("/login");
-  }
-}, [user]);
 
 
   if (loading) return <p>Loading classes...</p>;

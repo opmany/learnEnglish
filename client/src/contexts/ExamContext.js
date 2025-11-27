@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { getConnection, getExam, getMyExams, getMyClasses } from "../ApiRequest";
+import { getConnection, getMyExams, getMyClasses } from "../ApiRequest";
 
 const ExamContext = createContext();
 
@@ -9,7 +9,6 @@ export function ExamProvider({ children }) {
   const [connectionStatus, setConnectionStatus] = useState(null);
   const [allExams, setAllExams] = useState([]);
   const [myClasses, setMyClasses] = useState([]);
-
 
   // Fetch all exams across all classes
   const refreshExams = async () => {
@@ -39,18 +38,6 @@ const refreshClasses = async () => {
 
 
   useEffect(() => {
-    async function fetchExam() {
-      if (!selectedExamId) return;
-
-      try {
-        const data = await getExam(selectedExamId);
-        setCurrentExamJson(data);
-      } catch (err) {
-        console.error("Failed to fetch exam:", err);
-        setCurrentExamJson(null);
-      }
-    }
-
     async function testConnection() {
       try {
         const result = await getConnection();
@@ -61,7 +48,6 @@ const refreshClasses = async () => {
     }
 
     testConnection();
-    fetchExam();
     refreshExams();
   }, [selectedExamId]);
 

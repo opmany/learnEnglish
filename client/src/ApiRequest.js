@@ -106,6 +106,7 @@ export async function login(username, password) {
 
   // Store the token in localStorage
   localStorage.setItem("token", data.token);
+  localStorage.setItem("username", data.username);
 
   return data;
 }
@@ -247,4 +248,32 @@ export async function getMyExams() {
   });
   if (!response.ok) throw new Error("Failed to fetch exams");
   return response.json();
+}
+
+export async function generateInviteLink(classId) {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/class/${classId}/invite-link`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await res.json();
+}
+
+export async function joinClassFromSignature(signature) {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/class/join/${signature}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await res.json();
+}
+
+export async function classPreview(signature) {
+    const token = getToken();
+
+    const res = await fetch(`${API_URL}/class/preview/${signature}`, {
+    method: "GET",   
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await res.json();
 }

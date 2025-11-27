@@ -10,7 +10,7 @@ export const UserProvider = ({ children }) => {
   // Load user from localStorage on app start
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const username = localStorage.getItem("username"); // optional
+    const username = localStorage.getItem("username");
     if (token) {
       setUser({ token, username });
     }
