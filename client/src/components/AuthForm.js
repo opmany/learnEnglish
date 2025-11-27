@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Card, Form, Button, Alert, InputGroup, Toast, ToastContainer } from "react-bootstrap";
 import { PersonFill, EnvelopeFill, LockFill, EyeFill } from "react-bootstrap-icons";
+import { useNavigate } from "react-router";
 
 export default function AuthForm({ type = "login", onSubmit }) {
   const [username, setUsername] = useState("");
@@ -11,6 +12,8 @@ export default function AuthForm({ type = "login", onSubmit }) {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
+  let navigate = useNavigate();
+  
   const handleSubmit = async () => {
     try {
       setError("");
@@ -34,6 +37,20 @@ export default function AuthForm({ type = "login", onSubmit }) {
         <div className="text-center mb-4">
           <h2 className="fw-bold" style={{ color: "#2575fc" }}>Learning English</h2>
           <p className="text-muted">{type === "login" ? "Login to your account" : "Create a new account"}</p>
+          {
+          type === "login" ?
+            (
+            <div className="text-muted">  
+            Need an account? 
+            <Button onClick={() => navigate("/signup")} className="ms-1">Sign Up</Button>    
+            </div>
+            ) : (
+            <div className="text-muted">
+              Already have an account? 
+              <Button onClick={() => navigate("/login")} className="ms-1">Login</Button>
+            </div>
+            )
+          }
         </div>
 
         {error && <Alert variant="danger">{error}</Alert>}

@@ -4,10 +4,12 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Button from "react-bootstrap/Button";
 import { useExam } from "../contexts/ExamContext";
+import { useUser } from "../contexts/UserContext";
 import { useNavigate } from "react-router";
 
 export default function Home() {
   const { myClasses, refreshClasses } = useExam();
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,6 +31,12 @@ useEffect(() => {
 
   fetchClasses();
 }, []);
+
+useEffect(() => {
+  if (!user) {
+  navigate("/login");
+  }
+}, [user]);
 
 
   if (loading) return <p>Loading classes...</p>;
