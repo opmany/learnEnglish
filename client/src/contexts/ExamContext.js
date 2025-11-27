@@ -59,7 +59,6 @@ const refreshClasses = async () => {
       }
     }
 
-    console.log("selected exam id:", selectedExamId);
     testConnection();
     fetchExam();
     refreshExams();
