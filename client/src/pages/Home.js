@@ -6,6 +6,7 @@ import Button from "react-bootstrap/Button";
 import { useExam } from "../contexts/ExamContext";
 import { useUser } from "../contexts/UserContext";
 import { useNavigate } from "react-router";
+import CreateClassForm from "../components/CreateClassForm";
 
 export default function Home() {
   const { myClasses, refreshClasses } = useExam();
@@ -66,6 +67,7 @@ useEffect(() => {
       </Row>
           <div style={{ padding: "20px" }}>
       <h1>My Classes</h1>
+      <CreateClassForm />
       {myClasses?.length > 0 ? (
         <ul>
           {myClasses.map((cls) => (
