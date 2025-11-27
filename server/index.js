@@ -48,7 +48,7 @@ app.post('/login', async (req, res) => {
   if (!valid) return res.status(401).json({ error: 'Invalid password' });
 
   const token = jwt.sign({ id: user.rows[0].id }, JWT_SECRET, { expiresIn: '3h' });
-  res.json({ token });
+  res.json({ token, username });
 });
 
 function authenticateToken(req, res, next) {
@@ -366,6 +366,78 @@ app.put("/class/:id/default-exam", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+app.post("/class/:classId/invite-link", authenticateToken, async (req, res) => {
+  const { classId } = req.params;
+  const teacherId = req.user.id;
+
+  const signature = Buffer.from(`${classId}:${teacherId}`).toString("base64");
+
+  res.json({
+    join_url: `https://learnenglishfront.onrender.com/class/join/${signature}`
+  });
+});
+
+app.post("/class/join/:signature", authenticateToken, async (req, res) => {
+  const studentId = req.user.id;
+  const signature = req.params.signature;
+
+  const decoded = Buffer.from(signature, "base64").toString("ascii");
+  const [classId, teacherId] = decoded.split(":");
+
+  // prevent double join
+  try {
+  const exists = await pool.query(
+    `SELECT user_id 
+     FROM class_memberships 
+     WHERE class_id = $1 AND user_id = $2`,
+    [classId, studentId]);
+
+  if (exists.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO class_memberships (class_id, user_id, role) VALUES ($1, $2, 'student')`,
+      [classId, studentId]
+    );
+
+    res.json({
+      message: "Successfully joined the class!",
+      class_id: classId,
+      teacher_id: teacherId
+  });
+  }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  } finally {
+    res.status(500).json({ message: "Server time out" });
+  }
+});
+
+app.get("/class/preview/:signature", authenticateToken, async (req, res) => {
+  const studentId = req.user.id;
+  const signature = req.params.signature;
+
+  const decoded = Buffer.from(signature, "base64").toString("ascii");
+  const [classId, teacherId] = decoded.split(":");
+
+  try {
+    const result = await pool.query(
+      `SELECT c.*, u.username AS teacher_username
+       FROM classes c
+       LEFT JOIN users u ON c.teacher_id = u.id
+       WHERE c.id = $1`,
+      [classId]
+    );
+
+    if (!result.rows[0]) return res.status(404).json({ message: "Class not found" });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 //------------------------------------------------------------------------------------------------------------------------
 
