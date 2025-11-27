@@ -7,6 +7,11 @@ import MatchingGamePage from "./pages/MatchingGamePage";
 import MultipleChoiceQuizPage from "./pages/MultipleChoiceQuizPage";
 import FlashCardsPage from "./pages/FlashCardsPage";
 import ExamEditor from "./pages/ExamEditor";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import ClassPage from "./pages/ClassPage";
+import JoinClass from "./pages/JoinClass";
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
@@ -21,6 +26,10 @@ function App() {
         <Route path="/MultipleChoiceQuizPage" element={<MultipleChoiceQuizPage />} />
         <Route path="/FlashCardsPage" element={<FlashCardsPage />} />
         <Route path="/ExamEditor" element={<ExamEditor/>} />
+        <Route path="/Login" element={<LoginPage/>} />
+        <Route path="/Signup" element={<SignupPage/>} />
+        <Route path="/class/:id" element={<ClassPage />} />
+        <Route path="/class/join/:signature" element={<JoinClass />} />
       </Routes>
     </BrowserRouter>
   );

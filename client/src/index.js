@@ -3,14 +3,17 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { ExamProvider } from "./ExamContext";
+import { ExamProvider } from "./contexts/ExamContext";
+import { UserProvider } from "./contexts/UserContext";
 
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <ExamProvider>
-      <App />
+      <UserProvider>
+        <App />
+      </UserProvider>
     </ExamProvider>
   </React.StrictMode>
 );

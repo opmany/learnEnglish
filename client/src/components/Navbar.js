@@ -4,14 +4,22 @@ import Nav from "react-bootstrap/Nav";
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import Image from "react-bootstrap/Image";
 import Navbar from "react-bootstrap/Navbar";
+import { PersonCircle } from "react-bootstrap-icons";
 import folderImg from "../images/folder.png";
 import { useNavigate } from "react-router";
-import { useExam } from "../ExamContext";
+import { useExam } from "../contexts/ExamContext";
+import { useUser } from "../contexts/UserContext";
 
 const MyNavbar = () => {
-  const { setSelectedExamId, connectionStatus, currentExamJson, exams } = useExam();
-  
+  const { setSelectedExamId, connectionStatus, currentExamJson, allExams } = useExam();
+  const { user, logout } = useUser();
+
   let navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <Navbar expand="lg" className="bg-primary">
@@ -48,17 +56,17 @@ const MyNavbar = () => {
                 {connectionStatus || "Connecting..."}
               </small>
             </div>
-            {currentExamJson && 
-            <NavDropdown title={currentExamJson.name} id="basic-nav-dropdown" onChange={(e) => {setSelectedExamId(e.target.value)}}>
-              {exams.map(exam => (
-                <NavDropdown.Item
-                  key={exam.id}
-                  onClick={() => setSelectedExamId(exam.id)}
-                >
-                  {exam.name}
-                </NavDropdown.Item>
-              ))}
-            </NavDropdown>
+            {allExams?.length > 0 && currentExamJson &&
+              <NavDropdown title={currentExamJson.name} id="basic-nav-dropdown">
+                {allExams.map(exam => (
+                  <NavDropdown.Item
+                    key={exam.id}
+                    onClick={() => setSelectedExamId(exam.id)}
+                  >
+                    {exam.name} (Class: {exam.class_name})
+                  </NavDropdown.Item>
+                ))}
+              </NavDropdown>
             }
             <Nav.Link onClick={() => {navigate("/")}}>Home</Nav.Link>
             <Nav.Link onClick={() => {navigate("/WordsShowcase")}}>
@@ -67,6 +75,32 @@ const MyNavbar = () => {
             <Nav.Link onClick={() => {navigate("/ExamEditor")}}>
               Exam Editor
             </Nav.Link>
+
+            {/* User / Auth Links */}
+            {user ? (
+              <NavDropdown
+                align="end"
+                title={<PersonCircle size={28} className="text-white" />}
+                id="user-nav-dropdown"
+              >
+                <NavDropdown.Item onClick={() => navigate("/account")}>
+                  Account Settings
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={() => navigate("/change-password")}>
+                  Change Password
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={() => navigate("/change-username")}>
+                  Change Username
+                </NavDropdown.Item>
+                <NavDropdown.Divider />
+                <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
+              </NavDropdown>
+            ) : (
+              <>
+                <Nav.Link onClick={() => navigate("/login")}>Login</Nav.Link>
+                <Nav.Link onClick={() => navigate("/signup")}>Signup</Nav.Link>
+              </>
+            )}
           </Nav>
         </Navbar.Collapse>
       </Container>
