@@ -3,11 +3,11 @@ import { useParams } from "react-router";
 import { useExam } from "../contexts/ExamContext";
 import { useUser } from "../contexts/UserContext";
 import InviteStudents from "../components/TeacherInviteTool";
-import { getClassById, getExamsByClass, setDefaultExam } from "../ApiRequest";
+import { getClassById, getExamsByClass, setDefaultExam, createExam } from "../ApiRequest";
 
 export default function ClassPage() {
   const { id: classId } = useParams(); // /class/:id
-  const { exams, refreshExams, createExam, setSelectedExamId } = useExam();
+  const { exams, refreshExams, setSelectedExamId } = useExam();
   const { user } = useUser();
 
   const [classData, setClassData] = useState(null);
