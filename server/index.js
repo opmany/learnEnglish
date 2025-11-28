@@ -613,8 +613,10 @@ app.post("/api/parse", upload.single("file"), async (req, res) => {
   }
 });
 
-app.post("/api/insert", async (req, res) => {
-  const { rows, fileName } = req.body;
+app.post("/api/exam/:id/excel/update", async (req, res) => {
+  const examId = req.params.id;
+  const { rows } = req.body;
+
   if (!Array.isArray(rows) || rows.length === 0) {
     return res.status(400).json({ message: "No rows provided" });
   }
@@ -623,46 +625,51 @@ app.post("/api/insert", async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // sanitize exam name (strip extension and take basename)
-    const rawName = fileName ? path.basename(fileName) : `Imported Exam ${Date.now()}`;
-    const examName = rawName.replace(/\.[^/.]+$/, "").trim().slice(0, 255); // limit length
+    // ensure exam exists
+    const examRes = await client.query("SELECT * FROM exams WHERE id = $1", [examId]);
+    if (examRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ message: "Exam not found" });
+    }
 
-    // create exam
-    const examResult = await client.query(
-      "INSERT INTO exams (name) VALUES ($1) RETURNING *",
-      [examName]
-    );
-    const exam = examResult.rows[0];
+    // delete ONLY words, not the exam
+    await client.query("DELETE FROM words WHERE exam_id = $1", [examId]);
 
-    // insert words (trim values). I use a single INSERT per row to keep it simple;
-    // for large files use batched insert or COPY.
-    for (let i = 0; i < rows.length; ++i) {
-      const r = rows[i];
+    // insert new words
+    for (const r of rows) {
       const word = (r.word || "").toString().trim();
       const meaning = (r.meaning || "").toString().trim();
       const translation = (r.translation || "").toString().trim();
-      if (!word) continue; // skip rows without a word
+      if (!word) continue;
 
       await client.query(
         `INSERT INTO words (exam_id, word, meaning, translation)
          VALUES ($1, $2, $3, $4)`,
-        [exam.id, word, meaning, translation]
+        [examId, word, meaning, translation]
       );
     }
 
     await client.query("COMMIT");
 
-    const wordsRes = await pool.query("SELECT * FROM words WHERE exam_id = $1 ORDER BY id", [exam.id]);
-    res.status(201).json({ ...exam, words: wordsRes.rows });
+    const updatedWords = await pool.query(
+      "SELECT * FROM words WHERE exam_id = $1 ORDER BY id",
+      [examId]
+    );
+
+    res.status(200).json({
+      exam: examRes.rows[0],   // name stays the same
+      words: updatedWords.rows
+    });
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("Error inserting exam:", err);
-    res.status(500).json({ message: "Error inserting exam" });
+    console.error("Error updating exam from Excel:", err);
+    res.status(500).json({ message: "Error updating exam" });
   } finally {
     client.release();
   }
 });
+
 
 
 app.listen(port, () => {

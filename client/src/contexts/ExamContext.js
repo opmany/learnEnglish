@@ -19,7 +19,7 @@ export function ExamProvider({ children }) {
       // If no selected exam, pick first default exam automatically
       if (!selectedExamId) {
         const defaultExam = exams.find(ex => ex.is_default);
-        if (defaultExam) setSelectedExamId(defaultExam.exam_id);
+        if (defaultExam) setSelectedExamId(defaultExam.id);
       }
     } catch (err) {
       console.error("Failed to fetch exams:", err);

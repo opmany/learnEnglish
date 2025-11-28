@@ -4,7 +4,7 @@ import Table from 'react-bootstrap/Table';
 import Row from "react-bootstrap/esm/Row";
 import Col from "react-bootstrap/esm/Col";
 import { Modal, Button, Form } from "react-bootstrap";
-import { updateExamWords, parseExcel, insertExam } from "../ApiRequest";
+import { updateExamWords, parseExcel, updateExam } from "../ApiRequest";
 import { useExam } from "../contexts/ExamContext";
 import { Toast, ToastContainer } from "react-bootstrap";
 
@@ -76,9 +76,9 @@ const ExamEditor = (props) => {
 
   const handleConfirm = async () => {
     try {
-      const exam = await insertExam(rows, fileName);
+      const exam = await updateExam(rows, selectedExamId);
 
-      setToastMessage(`Inserted exam "${exam.name}" with ${exam.words.length} words`);
+      setToastMessage(`Updated exam "${currentExamJson.name}" with ${exam.words.length} words`);
       setToastVariant("success");
       setShowToast(true);  
 

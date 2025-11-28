@@ -58,11 +58,11 @@ export async function parseExcel(file) {
   return res.json();
 }
 
-export async function insertExam(rows, fileName) {
-  const res = await fetch(`${API_URL}/api/insert`, {
+export async function updateExam(rows, examId) {
+  const res = await fetch(`${API_URL}/api/exam/${examId}/excel/update`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ rows, fileName }),
+    body: JSON.stringify({ rows }),
   });
 
   if (!res.ok) {
